@@ -35,16 +35,16 @@ void forge_mmdb_close(void)
     int desired;
     
     // Loop until we successfully decrement or determine we shouldn't
-    do {
-        if (expected <= 0)
-            return;  // Counter is already 0 or negative, nothing to close
-        
+    while (expected > 0) {
         desired = expected - 1;
-    } while (!atomic_compare_exchange_weak(&g_refcount, &expected, desired));
-    
-    // If we decremented from 1 to 0, close the database
-    if (expected == 1) {
-        MMDB_close(&g_db);
+        if (atomic_compare_exchange_weak(&g_refcount, &expected, desired)) {
+            // Successfully decremented. If we went from 1 to 0, close the database
+            if (expected == 1) {
+                MMDB_close(&g_db);
+            }
+            return;
+        }
+        // CAS failed, expected now contains the current value, loop will recheck
     }
 }
 
