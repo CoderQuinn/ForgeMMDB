@@ -28,8 +28,22 @@ public final class FastDomainCNMatcher: GeoDomainProvider {
         var i = a.startIndex
         var p = literal.utf8Start
         while i != a.endIndex {
-            let c1 = a[i] | 0x20
-            let c2 = p.pointee | 0x20
+            let raw1 = a[i]
+            let raw2 = p.pointee
+
+            let c1: UInt8
+            if raw1 >= 0x41 && raw1 <= 0x5A { // 'A'...'Z'
+                c1 = raw1 | 0x20
+            } else {
+                c1 = raw1
+            }
+
+            let c2: UInt8
+            if raw2 >= 0x41 && raw2 <= 0x5A { // 'A'...'Z'
+                c2 = raw2 | 0x20
+            } else {
+                c2 = raw2
+            }
             if c1 != c2 { return false }
             a.formIndex(after: &i)
             p += 1
