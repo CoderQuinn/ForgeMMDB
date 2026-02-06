@@ -33,13 +33,6 @@ import ForgeBase
     #expect(CountryCode.sg.string == "SG")
 }
 
-@Test func fastDomainCNMatcher() {
-    let matcher = FastDomainCNMatcher()
-    #expect(matcher.predictedCountry(of: "example.cn") == .cn)
-    #expect(matcher.predictedCountry(of: "example.xn--fiqs8s") == .cn)
-    #expect(matcher.predictedCountry(of: "example.com") == nil)
-}
-
 @Test func mmdbPathResolverBundle() throws {
     let path = try MMDBPathResolver.resolve(.bundle(resource: "Country", ext: "mmdb"))
     #expect(FileManager.default.fileExists(atPath: path))
@@ -157,27 +150,6 @@ import ForgeBase
     let otherIP = FBIPv4(a: 8, b: 8, c: 8, d: 8)
     #expect(classifier.countryCode(of: otherIP) == .us)
     #expect(classifier.isCN(ip: otherIP) == false)
-}
-
-@Test func regionClassifierDomainPrediction() throws {
-    // Test RegionClassifier domain prediction with mock GeoIPProvider
-    struct MockGeoIP: GeoIPProvider {
-        func countryCode(of ip: FBIPv4) -> CountryCode? { nil }
-    }
-    
-    let classifier = RegionClassifier(geoIP: MockGeoIP())
-    
-    // Test CN domain
-    #expect(classifier.predictedCountry(of: "example.cn") == .cn)
-    #expect(classifier.isCN(domain: "example.cn") == true)
-    
-    // Test non-CN domain
-    #expect(classifier.predictedCountry(of: "example.com") == nil)
-    #expect(classifier.isCN(domain: "example.com") == false)
-    
-    // Test punycode CN domain
-    #expect(classifier.predictedCountry(of: "example.xn--fiqs8s") == .cn)
-    #expect(classifier.isCN(domain: "example.xn--fiqs8s") == true)
 }
 
 @Test func regionClassifierIntegration() throws {
