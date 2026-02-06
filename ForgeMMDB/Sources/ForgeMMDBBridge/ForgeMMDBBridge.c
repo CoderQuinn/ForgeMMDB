@@ -69,7 +69,7 @@ uint16_t forge_mmdb_country_ipv4(uint32_t ipv4_be)
     uint16_t country_code = 0;
     
     if (err == MMDB_SUCCESS && result.found_entry) {
-        MMDB_entry_data_s data;
+        MMDB_entry_data_s data = {0};
         if (MMDB_get_value(&result.entry, &data, "country", "iso_code", NULL) == MMDB_SUCCESS &&
             data.has_data && data.data_size == 2) {
             const unsigned char *s = (const unsigned char *)data.utf8_string;
