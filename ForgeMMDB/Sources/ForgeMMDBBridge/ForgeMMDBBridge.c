@@ -31,11 +31,13 @@ int forge_mmdb_open(const char *path)
 
 void forge_mmdb_close(void)
 {
-    int prev = atomic_load(&g_refcount);
-    if (prev <= 0)
+    int prev = atomic_fetch_sub(&g_refcount, 1);
+    if (prev <= 0) {
+        // Underflow protection: restore the counter
+        atomic_fetch_add(&g_refcount, 1);
         return;
+    }
 
-    prev = atomic_fetch_sub(&g_refcount, 1);
     if (prev > 1)
         return;
 
