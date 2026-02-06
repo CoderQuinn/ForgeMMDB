@@ -9,18 +9,20 @@
 #include <maxminddb.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <stdatomic.h>
 
 static MMDB_s g_db;
-static int g_refcount = 0;
+static atomic_int g_refcount = 0;
 
 int forge_mmdb_open(const char *path)
 {
-    if (g_refcount++ > 0)
+    int prev = atomic_fetch_add(&g_refcount, 1);
+    if (prev > 0)
         return 0;
 
     int status = MMDB_open(path, MMDB_MODE_MMAP, &g_db);
     if (status != MMDB_SUCCESS) {
-        g_refcount = 0;
+        atomic_store(&g_refcount, 0);
         return status;
     }
 
@@ -29,19 +31,26 @@ int forge_mmdb_open(const char *path)
 
 void forge_mmdb_close(void)
 {
-    if (g_refcount <= 0)
-        return;
-
-    if (--g_refcount > 0)
-        return;
-
-    MMDB_close(&g_db);
-    g_refcount = 0;
+    int expected = atomic_load(&g_refcount);
+    int desired;
+    
+    // Loop until we successfully decrement or determine we shouldn't
+    while (expected > 0) {
+        desired = expected - 1;
+        if (atomic_compare_exchange_weak(&g_refcount, &expected, desired)) {
+            // Successfully decremented. If we went from 1 to 0, close the database
+            if (expected == 1) {
+                MMDB_close(&g_db);
+            }
+            return;
+        }
+        // CAS failed, expected now contains the current value, loop will recheck
+    }
 }
 
 uint16_t forge_mmdb_country_ipv4(uint32_t ipv4_be)
 {
-    if (g_refcount <= 0)
+    if (atomic_load(&g_refcount) <= 0)
         return 0;
 
     struct sockaddr_in sa = {0};
