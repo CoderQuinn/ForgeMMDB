@@ -1,0 +1,15 @@
+{
+  "originHash" : "49a07ebcd5337122e70d49bee370a39243a4c41343ca387a3dd506ee08970110",
+  "pins" : [
+    {
+      "identity" : "forgebase",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CoderQuinn/ForgeBase.git",
+      "state" : {
+        "revision" : "c00dc3d628e3375919d3b176e70d72c91d260a6e",
+        "version" : "0.2.1"
+      }
+    }
+  ],
+  "version" : 3
+}
