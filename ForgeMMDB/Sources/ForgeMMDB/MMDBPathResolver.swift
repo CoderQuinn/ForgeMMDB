@@ -23,6 +23,7 @@ enum MMDBPathResolver {
             return url.path
 
         case let .appGroup(groupID, file):
+            #if canImport(UIKit) || canImport(AppKit)
             guard let base = FileManager.default.containerURL(
                 forSecurityApplicationGroupIdentifier: groupID
             ) else {
@@ -31,6 +32,9 @@ enum MMDBPathResolver {
             let url = base.appendingPathComponent(file, isDirectory: false)
             try ensureReadable(url)
             return url.path
+            #else
+            throw MMDBPathError.appGroupNotFound(groupID: groupID)
+            #endif
 
         case let .absolute(path):
             let url = URL(fileURLWithPath: path)
