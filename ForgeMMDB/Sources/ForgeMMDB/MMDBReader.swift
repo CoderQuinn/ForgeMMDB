@@ -6,22 +6,35 @@
 //
 
 import Foundation
+import Dispatch
 import ForgeBase
 import ForgeMMDBBridge
 
-public final class MMDBReader: GeoIPProvider {
+public final class MMDBReader: GeoIPProvider, @unchecked Sendable {
+
+    /// Serializes all access to the underlying C MMDB bridge, which uses global mutable state.
+    private static let mmdbQueue = DispatchQueue(label: "ForgeMMDB.MMDBReader.mmdbQueue")
 
     public init(location: MMDBLocation = .bundle(resource: "Country", ext: "mmdb")) throws {
         let path = try MMDBPathResolver.resolve(location)
-        let status = forge_mmdb_open(path)
+        let status = MMDBReader.mmdbQueue.sync {
+            forge_mmdb_open(path)
+        }
         guard status == 0 else { throw MMDBOpenError(status: status) }
     }
 
-    deinit { forge_mmdb_close() }
+    deinit {
+        MMDBReader.mmdbQueue.sync {
+            forge_mmdb_close()
+        }
+    }
 
     @inline(__always)
     public func countryCode(of ip: FBIPv4) -> CountryCode? {
-        CountryCode(packedBE: forge_mmdb_country_ipv4(ip.beValue))
+        let packed = MMDBReader.mmdbQueue.sync {
+            forge_mmdb_country_ipv4(ip.beValue)
+        }
+        return CountryCode(packedBE: packed)
     }
 }
 
