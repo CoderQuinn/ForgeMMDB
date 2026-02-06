@@ -59,7 +59,11 @@ import ForgeBase
 
 @Test func mmdbReaderLoadsSuccessfully() throws {
     // Test that MMDBReader can be initialized with the bundled database
-    _ = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
+    let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
+    
+    // Verify the reader is in a usable state by attempting a lookup
+    let testIP = FBIPv4(a: 8, b: 8, c: 8, d: 8)
+    _ = reader.countryCode(of: testIP)  // Should not crash
 }
 
 @Test func mmdbReaderIPLookup() throws {
@@ -92,20 +96,25 @@ import ForgeBase
     // Test that the MMDBReader interface works correctly
     let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
     
-    // Test with various IPs to ensure no crashes
-    let testIPs = [
-        "8.8.8.8",
-        "1.1.1.1",
-        "180.76.76.76",
-        "114.114.114.114",
-        "208.67.222.222",
+    // Test with various IPs
+    let publicIPs = [
+        "8.8.8.8",          // Google DNS (US)
+        "1.1.1.1",          // Cloudflare DNS
+        "180.76.76.76",     // Baidu DNS (CN)
+        "114.114.114.114",  // 114 DNS (CN)
+        "208.67.222.222",   // OpenDNS (US)
         "4.4.4.4",
         "9.9.9.9",
-        "192.168.1.1",  // Private IP
-        "10.0.0.1",      // Private IP
     ]
     
-    for ipStr in testIPs {
+    let privateIPs = [
+        "192.168.1.1",  // Private IP - should return nil
+        "10.0.0.1",     // Private IP - should return nil
+        "172.16.0.1",   // Private IP - should return nil
+    ]
+    
+    // Test public IPs
+    for ipStr in publicIPs {
         if let ip = FBIPv4Parse.parseDottedDecimal(ipStr[...]) {
             if let country = reader.countryCode(of: ip) {
                 // If we get a country code, verify it's valid
@@ -113,12 +122,16 @@ import ForgeBase
                 #expect(str.count == 2, "Country code should be 2 characters")
                 #expect(str.allSatisfy { $0.isASCII && $0.isLetter }, "Country code should be ASCII letters")
             }
-            // nil is also a valid result for IPs not in the database
         }
     }
     
-    // Test passes if all lookups completed without crashing
-    // and any returned country codes are valid
+    // Test private IPs - should return nil as they're not in GeoIP databases
+    for ipStr in privateIPs {
+        if let ip = FBIPv4Parse.parseDottedDecimal(ipStr[...]) {
+            let country = reader.countryCode(of: ip)
+            #expect(country == nil, "Private IP \(ipStr) should not have a country code")
+        }
+    }
 }
 
 // MARK: - RegionClassifier Tests
