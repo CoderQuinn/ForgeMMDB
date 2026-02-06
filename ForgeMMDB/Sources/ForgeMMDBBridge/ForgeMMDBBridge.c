@@ -50,8 +50,13 @@ void forge_mmdb_close(void)
 
 uint16_t forge_mmdb_country_ipv4(uint32_t ipv4_be)
 {
-    if (atomic_load(&g_refcount) <= 0)
+    // Increment refcount to ensure database stays open during lookup
+    int prev = atomic_fetch_add(&g_refcount, 1);
+    if (prev <= 0) {
+        // Database was not open, decrement and return
+        atomic_fetch_sub(&g_refcount, 1);
         return 0;
+    }
 
     struct sockaddr_in sa = {0};
     sa.sin_family = AF_INET;
@@ -61,14 +66,19 @@ uint16_t forge_mmdb_country_ipv4(uint32_t ipv4_be)
     MMDB_lookup_result_s result =
         MMDB_lookup_sockaddr(&g_db, (struct sockaddr *)&sa, &err);
 
-    if (err != MMDB_SUCCESS || !result.found_entry)
-        return 0;
+    uint16_t country_code = 0;
+    
+    if (err == MMDB_SUCCESS && result.found_entry) {
+        MMDB_entry_data_s data = {0};
+        if (MMDB_get_value(&result.entry, &data, "country", "iso_code", NULL) == MMDB_SUCCESS &&
+            data.has_data && data.type == MMDB_DATA_TYPE_UTF8_STRING && data.data_size == 2) {
+            const unsigned char *s = (const unsigned char *)data.utf8_string;
+            country_code = ((uint16_t)s[0] << 8) | s[1];
+        }
+    }
 
-    MMDB_entry_data_s data;
-    if (MMDB_get_value(&result.entry, &data, "country", "iso_code", NULL) != MMDB_SUCCESS ||
-        !data.has_data || data.data_size != 2)
-        return 0;
-
-    const unsigned char *s = (const unsigned char *)data.utf8_string;
-    return ((uint16_t)s[0] << 8) | s[1];
+    // Decrement refcount now that we're done with the database
+    atomic_fetch_sub(&g_refcount, 1);
+    
+    return country_code;
 }
