@@ -31,18 +31,21 @@ int forge_mmdb_open(const char *path)
 
 void forge_mmdb_close(void)
 {
-    int prev = atomic_fetch_sub(&g_refcount, 1);
-    if (prev <= 0) {
-        // Underflow protection: restore the counter
-        atomic_fetch_add(&g_refcount, 1);
-        return;
+    int expected = atomic_load(&g_refcount);
+    int desired;
+    
+    // Loop until we successfully decrement or determine we shouldn't
+    do {
+        if (expected <= 0)
+            return;  // Counter is already 0 or negative, nothing to close
+        
+        desired = expected - 1;
+    } while (!atomic_compare_exchange_weak(&g_refcount, &expected, desired));
+    
+    // If we decremented from 1 to 0, close the database
+    if (expected == 1) {
+        MMDB_close(&g_db);
     }
-
-    if (prev > 1)
-        return;
-
-    MMDB_close(&g_db);
-    atomic_store(&g_refcount, 0);
 }
 
 uint16_t forge_mmdb_country_ipv4(uint32_t ipv4_be)
