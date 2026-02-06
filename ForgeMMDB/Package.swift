@@ -27,7 +27,7 @@ let package = Package(
             cSettings: [
                 .define("MMDB_UINT128_IS_BYTE_ARRAY"),
                 .headerSearchPath("src"),
-                .define("PACKAGE_VERSION", to: "\"0.0.0\"")
+                .define("PACKAGE_VERSION", to: "\"0.1.0\"")
             ]
         ),
         .target(
