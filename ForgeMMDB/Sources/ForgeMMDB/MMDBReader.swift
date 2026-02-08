@@ -5,13 +5,12 @@
 //  Created by MagicianQuinn on 2026/2/6.
 //
 
-import Foundation
 import Dispatch
 import ForgeBase
 import ForgeMMDBBridge
+import Foundation
 
 public final class MMDBReader: GeoIPProvider, @unchecked Sendable {
-
     /// Serializes all access to the underlying C MMDB bridge, which uses global mutable state.
     private static let mmdbQueue = DispatchQueue(label: "ForgeMMDB.MMDBReader.mmdbQueue")
 

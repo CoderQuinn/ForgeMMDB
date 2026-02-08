@@ -1,7 +1,7 @@
-import Foundation
-import Testing
 import ForgeBase
 @testable import ForgeMMDB
+import Foundation
+import Testing
 
 @Test func countryCodePackedBE() {
     let code = CountryCode(packedBE: 0x5553)
@@ -53,59 +53,59 @@ import ForgeBase
 @Test func mmdbReaderLoadsSuccessfully() throws {
     // Test that MMDBReader can be initialized with the bundled database
     let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
-    
+
     // Verify the reader is in a usable state by attempting a lookup
     let testIP = FBIPv4(a: 8, b: 8, c: 8, d: 8)
-    _ = reader.countryCode(of: testIP)  // Should not crash
+    _ = reader.countryCode(of: testIP) // Should not crash
 }
 
 @Test func mmdbReaderIPLookup() throws {
     // Test IP-to-country lookup functionality
     let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
-    
+
     // Test with various public IPs
     // Note: The actual results depend on the MMDB database content
     // We mainly verify that the lookup mechanism works without crashing
-    
+
     let testIPs = [
-        "8.8.8.8",       // Google DNS
-        "1.1.1.1",       // Cloudflare DNS
-        "180.76.76.76",  // Baidu DNS (CN)
+        "8.8.8.8", // Google DNS
+        "1.1.1.1", // Cloudflare DNS
+        "180.76.76.76", // Baidu DNS (CN)
         "114.114.114.114", // 114 DNS (CN)
         "208.67.222.222", // OpenDNS (US)
     ]
-    
+
     for ipStr in testIPs {
         if let ip = FBIPv4Parse.parseDottedDecimal(ipStr[...]) {
             // The lookup should not crash, regardless of result
             _ = reader.countryCode(of: ip)
         }
     }
-    
+
     // Test passes if no crashes occurred
 }
 
 @Test func mmdbReaderReturnsValidCountryCode() throws {
     // Test that the MMDBReader interface works correctly
     let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
-    
+
     // Test with various IPs
     let publicIPs = [
-        "8.8.8.8",          // Google DNS (US)
-        "1.1.1.1",          // Cloudflare DNS
-        "180.76.76.76",     // Baidu DNS (CN)
-        "114.114.114.114",  // 114 DNS (CN)
-        "208.67.222.222",   // OpenDNS (US)
+        "8.8.8.8", // Google DNS (US)
+        "1.1.1.1", // Cloudflare DNS
+        "180.76.76.76", // Baidu DNS (CN)
+        "114.114.114.114", // 114 DNS (CN)
+        "208.67.222.222", // OpenDNS (US)
         "4.4.4.4",
         "9.9.9.9",
     ]
-    
+
     let privateIPs = [
-        "192.168.1.1",  // Private IP - should return nil
-        "10.0.0.1",     // Private IP - should return nil
-        "172.16.0.1",   // Private IP - should return nil
+        "192.168.1.1", // Private IP - should return nil
+        "10.0.0.1", // Private IP - should return nil
+        "172.16.0.1", // Private IP - should return nil
     ]
-    
+
     // Test public IPs
     for ipStr in publicIPs {
         if let ip = FBIPv4Parse.parseDottedDecimal(ipStr[...]) {
@@ -117,7 +117,7 @@ import ForgeBase
             }
         }
     }
-    
+
     // Test private IPs - should return nil as they're not in GeoIP databases
     for ipStr in privateIPs {
         if let ip = FBIPv4Parse.parseDottedDecimal(ipStr[...]) {
@@ -140,13 +140,13 @@ import ForgeBase
             return .us
         }
     }
-    
+
     let classifier = RegionClassifier(geoIP: MockGeoIP())
-    
+
     let testIP = FBIPv4(a: 1, b: 2, c: 3, d: 4)
     #expect(classifier.countryCode(of: testIP) == .cn)
     #expect(classifier.isCN(ip: testIP) == true)
-    
+
     let otherIP = FBIPv4(a: 8, b: 8, c: 8, d: 8)
     #expect(classifier.countryCode(of: otherIP) == .us)
     #expect(classifier.isCN(ip: otherIP) == false)
@@ -156,16 +156,16 @@ import ForgeBase
     // Integration test with real MMDBReader
     let reader = try MMDBReader(location: .bundle(resource: "Country", ext: "mmdb"))
     let classifier = RegionClassifier(geoIP: reader)
-    
+
     // Test that classifier delegates correctly to the reader
     // We'll use a mock IP to ensure consistent behavior
     let testIP = FBIPv4(a: 1, b: 1, c: 1, d: 1)
     let readerResult = reader.countryCode(of: testIP)
     let classifierResult = classifier.countryCode(of: testIP)
-    
+
     // Results should match
     #expect(readerResult == classifierResult)
-    
+
     // Test isCN method
     if let country = classifierResult {
         #expect(classifier.isCN(ip: testIP) == (country == .cn))
@@ -173,4 +173,3 @@ import ForgeBase
         #expect(classifier.isCN(ip: testIP) == false)
     }
 }
-

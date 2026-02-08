@@ -14,7 +14,6 @@ public enum MMDBLocation: Sendable {
     case absolute(String)
 }
 
-
 public enum ForgeMMDB {
     /// Default:
     /// - mmdb: bundled Country.mmdb
