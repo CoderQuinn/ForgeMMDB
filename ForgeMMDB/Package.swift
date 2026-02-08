@@ -7,7 +7,7 @@ let package = Package(
     name: "ForgeMMDB",
     platforms: [
         .iOS(.v15),
-        .macOS(.v13)
+        .macOS(.v13),
     ],
     products: [
         .library(name: "ForgeMMDB", targets: ["ForgeMMDB"]),
@@ -21,13 +21,13 @@ let package = Package(
             path: "Sources/libmaxminddb",
             sources: [
                 "src/data-pool.c",
-                "src/maxminddb.c"
+                "src/maxminddb.c",
             ],
             publicHeadersPath: "include",
             cSettings: [
                 .define("MMDB_UINT128_IS_BYTE_ARRAY"),
                 .headerSearchPath("src"),
-                .define("PACKAGE_VERSION", to: "\"0.1.0\"")
+                .define("PACKAGE_VERSION", to: "\"0.1.0\""),
             ]
         ),
         .target(
@@ -41,7 +41,7 @@ let package = Package(
             dependencies: ["ForgeMMDBBridge", "ForgeBase"],
             path: "Sources/ForgeMMDB",
             resources: [
-                .copy("Resources/Country.mmdb")
+                .copy("Resources/Country.mmdb"),
             ]
         ),
         .testTarget(
@@ -51,4 +51,3 @@ let package = Package(
         ),
     ]
 )
-

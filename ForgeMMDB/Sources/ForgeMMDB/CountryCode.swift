@@ -11,12 +11,12 @@ public struct CountryCode: Hashable, Sendable {
     @inline(__always)
     public init?(packedBE: UInt16) {
         guard packedBE != 0 else { return nil }
-        self.rawValue = packedBE
+        rawValue = packedBE
     }
 
     public var string: String {
         let a = UInt8(rawValue >> 8)
-        let b = UInt8(rawValue & 0xff)
+        let b = UInt8(rawValue & 0xFF)
         return String(bytes: [a, b], encoding: .ascii) ?? "unknown"
     }
 }
@@ -70,6 +70,7 @@ public extension CountryCode {
         }
         return code
     }()
+
     @inline(__always)
     init?(_ iso2: (UInt8, UInt8)) {
         let v = (UInt16(iso2.0) << 8) | UInt16(iso2.1)

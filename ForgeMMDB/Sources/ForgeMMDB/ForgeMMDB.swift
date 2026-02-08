@@ -14,7 +14,6 @@ public enum MMDBLocation: Sendable {
     case absolute(String)
 }
 
-
 public enum ForgeMMDB {
     /// Default:
     /// - mmdb: bundled Country.mmdb
@@ -23,7 +22,6 @@ public enum ForgeMMDB {
         mmdb: MMDBLocation = .bundle(resource: "Country", ext: "mmdb")
     ) throws -> RegionClassifier {
         let reader = try MMDBReader(location: mmdb)
-        let domain = FastDomainCNMatcher()
-        return RegionClassifier(geoIP: reader, geoDomain: domain)
+        return RegionClassifier(geoIP: reader)
     }
 }

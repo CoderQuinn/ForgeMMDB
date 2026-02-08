@@ -9,11 +9,9 @@ import ForgeBase
 
 public final class RegionClassifier: Sendable {
     private let geoIP: GeoIPProvider
-    private let geoDomain: GeoDomainProvider
 
-    public init(geoIP: GeoIPProvider, geoDomain: GeoDomainProvider = FastDomainCNMatcher()) {
+    public init(geoIP: GeoIPProvider) {
         self.geoIP = geoIP
-        self.geoDomain = geoDomain
     }
 
     public func countryCode(of ip: FBIPv4) -> CountryCode? {
@@ -23,12 +21,5 @@ public final class RegionClassifier: Sendable {
     public func isCN(ip: FBIPv4) -> Bool {
         countryCode(of: ip) == .cn
     }
-
-    public func predictedCountry(of domain: String) -> CountryCode? {
-        geoDomain.predictedCountry(of: domain)
-    }
-
-    public func isCN(domain: String) -> Bool {
-        predictedCountry(of: domain) == .cn
-    }
+    
 }
